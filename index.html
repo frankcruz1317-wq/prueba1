@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HMI Trainer (Operator Menu)</title>
+  <style>
+    :root{
+      --bg:#050505;
+      --panel:#0b0b0b;
+      --line:#2a2a2a;
+      --text:#f2f2f2;
+      --muted:#bdbdbd;
+      --accent:#ffcc00;
+      --good:#44d07d;
+      --warn:#ff6b6b;
+      --btn:#121212;
+      --btn2:#1a1a1a;
+      --shadow: rgba(0,0,0,.45);
+      --radius:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 15% 15%, #151515 0%, var(--bg) 55%);
+      color:var(--text);
+      font-family:var(--sans);
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .frame{
+      width:min(1100px, 100%);
+      height:min(680px, 100%);
+      background: linear-gradient(180deg, #0c0c0c, #060606);
+      border:1px solid #202020;
+      border-radius:22px;
+      box-shadow: 0 30px 80px var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+    }
+    .topbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:14px 14px;
+      background: linear-gradient(180deg, #101010, #080808);
+      border-bottom:1px solid #1f1f1f;
+    }
+    .pill{
+      border:1px solid #2a2a2a;
+      background:#0a0a0a;
+      border-radius:999px;
+      padding:8px 10px;
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .pill b{color:var(--text); font-weight:700}
+    .status{
+      flex:1;
+      min-width:0;
+      border:1px solid #2b2b2b;
+      background:#0a0a0a;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .status .label{color:var(--accent); font-weight:800; margin-right:8px}
+    .content{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      height:100%;
+      min-height:0;
+    }
+    .nav{
+      border-right:1px solid #1f1f1f;
+      background: linear-gradient(180deg, #0b0b0b, #070707);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+    }
+    .nav h3{
+      margin:0;
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:var(--accent);
+    }
+    .search{
+      display:flex;
+      gap:10px;
+    }
+    input[type="search"]{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #2a2a2a;
+      background:#0a0a0a;
+      color:var(--text);
+      outline:none;
+    }
+    .btn{
+      border:1px solid #2a2a2a;
+      background: linear-gradient(180deg, var(--btn2), var(--btn));
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      transition:.12s transform, .12s border-color;
+      font-weight:700;
+    }
+    .btn:hover{transform: translateY(-1px); border-color:#3a3a3a;}
+    .btn:active{transform: translateY(0px);}
+    .btn.accent{
+      border-color:#5a4a00;
+      background: linear-gradient(180deg, #2b2200, #141000);
+      color:#ffe07a;
+    }
+    .btn.good{
+      border-color:#114b2a;
+      background: linear-gradient(180deg, #0f2a1b, #09160f);
+      color:#aaf0c6;
+    }
+    .menu{
+      overflow:auto;
+      padding-right:6px;
+    }
+    .menu::-webkit-scrollbar{width:10px}
+    .menu::-webkit-scrollbar-thumb{background:#1f1f1f; border-radius:10px}
+    .item{
+      border:1px solid #242424;
+      background:#0a0a0a;
+      padding:10px 12px;
+      border-radius:14px;
+      margin-bottom:10px;
+      cursor:pointer;
+      transition:.12s border-color, .12s transform;
+    }
+    .item:hover{border-color:#3a3a3a; transform:translateY(-1px)}
+    .item.active{border-color:#6a5600; box-shadow:0 0 0 2px rgba(255,204,0,.08) inset}
+    .item .title{font-weight:900; letter-spacing:.04em}
+    .item .sub{color:var(--muted); font-size:12px; margin-top:4px}
+    .main{
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-height:0;
+      background:
+        radial-gradient(900px 520px at 60% 35%, rgba(255,204,0,.06) 0%, rgba(0,0,0,0) 55%),
+        linear-gradient(180deg, #070707, #050505);
+    }
+    .screenTitle{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid #222;
+      background:#070707;
+      border-radius:16px;
+      padding:14px 14px;
+    }
+    .screenTitle h1{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+      color:var(--accent);
+    }
+    .chip{
+      margin-left:auto;
+      font-size:12px;
+      color:var(--muted);
+      border:1px dashed #2f2f2f;
+      padding:6px 10px;
+      border-radius:999px;
+      font-family:var(--mono);
+      max-width:55%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:14px;
+      min-height:0;
+      flex:1;
+    }
+    .card{
+      border:1px solid #222;
+      background: linear-gradient(180deg, #090909, #060606);
+      border-radius:var(--radius);
+      padding:14px;
+      min-height:0;
+    }
+    .card h2{
+      margin:0 0 12px 0;
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:var(--accent);
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px 12px;
+      align-items:center;
+    }
+    .kv .k{
+      color:var(--text);
+      opacity:.95;
+    }
+    .kv .v{
+      font-family:var(--mono);
+      color:#eaeaea;
+      background:#0a0a0a;
+      border:1px solid #242424;
+      padding:7px 10px;
+      border-radius:12px;
+      text-align:right;
+      min-width:120px;
+    }
+    .help{
+      border:1px solid #242424;
+      background:#070707;
+      border-radius:14px;
+      padding:12px;
+      color:var(--muted);
+      line-height:1.35;
+      font-size:13px;
+      min-height:120px;
+      white-space:pre-wrap;
+    }
+    .help.hidden{
+      color:transparent;
+      text-shadow: 0 0 12px rgba(242,242,242,.24);
+      user-select:none;
+      position:relative;
+    }
+    .help.hidden::after{
+      content:"👀 Modo práctica: tocá ‘REVELAR’ para ver la explicación";
+      position:absolute;
+      inset:12px;
+      color:var(--muted);
+      text-shadow:none;
+      user-select:none;
+    }
+    .rightCol{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-height:0;
+    }
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .footer{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      background:#070707;
+      border-top:1px solid #1f1f1f;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .small{
+      font-family:var(--mono);
+      color:#bdbdbd;
+    }
+    .badge{
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid #2a2a2a;
+      background:#0a0a0a;
+    }
+    .toggle{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .toggle input{accent-color: var(--accent);}
+    @media (max-width: 920px){
+      .content{grid-template-columns: 1fr}
+      .nav{display:none}
+      .grid{grid-template-columns: 1fr}
+      .chip{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="topbar">
+      <div class="pill"><b>Vacuum</b> 1010</div>
+      <div class="pill">Prog. <b id="prog">1</b></div>
+      <div class="pill">Strokes/min <b id="spm">10.9</b></div>
+      <div class="pill">Date <b id="date">21/04/2014</b></div>
+      <div class="pill">Time <b id="time">16:11:26</b></div>
+      <div class="status"><span class="label">Status</span><span id="statusText">Standby: Machine ready to start.</span></div>
+    </div>
+
+    <div class="content">
+      <aside class="nav">
+        <h3>OPERATOR MENU</h3>
+        <div class="search">
+          <input id="q" type="search" placeholder="Buscar pantalla o parámetro…" />
+          <button class="btn" id="clear">X</button>
+        </div>
+        <div class="menu" id="menu"></div>
+
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:10px">Controles</h2>
+          <div class="toggle">
+            <input id="practiceMode" type="checkbox" />
+            <label for="practiceMode">Modo práctica (oculta explicación)</label>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:10px;">
+            <button class="btn accent" id="btnReset">RESET</button>
+            <button class="btn" id="btnDate">DATE</button>
+            <button class="btn" id="btnCode">CODE</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="screenTitle">
+          <h1 id="screenTitle">MAIN MENU</h1>
+          <div class="chip" id="crumb">Operator menu</div>
+        </div>
+
+        <div class="grid">
+          <section class="card">
+            <h2>Parámetros</h2>
+            <div class="kv" id="kv"></div>
+            <div style="height:12px"></div>
+            <h2>Explicación (manual)</h2>
+            <div class="help" id="help"></div>
+          </section>
+
+          <aside class="rightCol">
+            <section class="card">
+              <h2>Acciones</h2>
+              <div class="actions">
+                <button class="btn good" id="reveal">REVELAR</button>
+                <button class="btn" id="hide">OCULTAR</button>
+                <button class="btn" id="next">SIGUIENTE</button>
+                <button class="btn" id="prev">ANTERIOR</button>
+              </div>
+              <div style="height:10px"></div>
+              <div class="small">
+                Tip: en práctica, intentá explicar con tus palabras y luego compará con el texto.
+              </div>
+            </section>
+
+            <section class="card">
+              <h2>Quiz rápido</h2>
+              <div class="small" id="quizQ">Elegí una pantalla para iniciar.</div>
+              <div style="height:10px"></div>
+              <button class="btn" id="quizBtn">Generar pregunta</button>
+              <div style="height:10px"></div>
+              <div class="help" id="quizA" style="min-height:92px"></div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <div class="footer">
+      <div>
+        <span class="badge">HMI Trainer</span>
+        <span class="badge">Offline</span>
+        <span class="badge">Flashcards</span>
+      </div>
+      <div class="small">Hecho para practicar menús tipo touchscreen 💛</div>
+    </div>
+  </div>
+
+  <script>
+    // Datos base (puedes ampliarlo copiando más pantallas del PDF)
+    const SCREENS = [
+      {
+        id: "main",
+        title: "MAIN MENU",
+        crumb: "Operator menu",
+        params: [
+          { k: "RESET", v: "—" },
+          { k: "DATE", v: "—" },
+          { k: "CODE", v: "—" },
+        ],
+        help:
+`Este "MAIN MENU" es la entrada tipo HMI: botones como DATE / CODE / RESET (ver menú del documento).`
+      },
+
+      {
+        id: "forming_times",
+        title: "FORMING TIMES",
+        crumb: "Operator menu > Forming times",
+        params: [
+          { k: "Warming pressure", v: "1.00 Bar" },
+          { k: "Warming time", v: "1.00 sec" },
+          { k: "Forming pressure", v: "1.00 Bar" },
+          { k: "Film cooling time", v: "1.00 sec" },
+          { k: "Ventilation pressure", v: "0.01 Bar" },
+          { k: "Ventilation time", v: "0.40 sec" },
+        ],
+        // Basado en el texto del documento (Form Pres / Cool time / Vent Pres)
+        help:
+`• Forming pressure: es el punto de presión para parar el flujo de aire (el valor real puede quedar más alto por la reacción del sistema y el tamaño del die; dies pequeños llegan más rápido). Si no se llega en 1 segundo, el programa sigue al siguiente paso.
+• Film cooling time: es el tiempo para sacar ~30°C del film; si está claro, ya está suficientemente frío.`
+      },
+
+      {
+        id: "temperature_settings",
+        title: "TEMPERATURE SETTINGS",
+        crumb: "Operator menu > Temperature settings",
+        params: [
+          { k: "FORM HEATER (SP)", v: "85.0 °C" },
+          { k: "FORM HEATER (PV)", v: "84.5 °C" },
+          { k: "FORM HEATER (I)", v: "12.5 A" },
+          { k: "Temperature limit +/-", v: "10.0 °C" },
+          { k: "Temperature too high", v: "170.0 °C" },
+          { k: "SEAL HEATER (SP)", v: "145.0 °C" },
+          { k: "SEAL HEATER (PV)", v: "144.7 °C" },
+          { k: "SEAL HEATER (I)", v: "12.3 A" },
+        ],
+        help:
+`• “Temperature limit +/-”: ventana de trabajo típica (muchos films trabajan con ~20°C).
+• “Temperature too high”: valor donde los heaters se apagan. Ojo con TRIACs: cuando fallan a menudo quedan en corto y meten power continuo; este límite ayuda a proteger, pero mantenelo dentro del rango del film.`
+      },
+    ];
+
+    // UI state
+    let filtered = [...SCREENS];
+    let idx = 0;
+
+    const menuEl = document.getElementById("menu");
+    const qEl = document.getElementById("q");
+    const clearEl = document.getElementById("clear");
+    const titleEl = document.getElementById("screenTitle");
+    const crumbEl = document.getElementById("crumb");
+    const kvEl = document.getElementById("kv");
+    const helpEl = document.getElementById("help");
+    const practiceEl = document.getElementById("practiceMode");
+
+    const statusEl = document.getElementById("statusText");
+    const dateEl = document.getElementById("date");
+    const timeEl = document.getElementById("time");
+
+    const revealBtn = document.getElementById("reveal");
+    const hideBtn = document.getElementById("hide");
+    const nextBtn = document.getElementById("next");
+    const prevBtn = document.getElementById("prev");
+
+    const quizQ = document.getElementById("quizQ");
+    const quizA = document.getElementById("quizA");
+    const quizBtn = document.getElementById("quizBtn");
+
+    // Simula reloj
+    function tick(){
+      const now = new Date();
+      const pad = (n)=> String(n).padStart(2,"0");
+      timeEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+    setInterval(tick, 1000); tick();
+
+    function renderMenu(){
+      menuEl.innerHTML = "";
+      filtered.forEach((s, i)=>{
+        const div = document.createElement("div");
+        div.className = "item" + (i===idx ? " active":"");
+        div.innerHTML = `<div class="title">${s.title}</div><div class="sub">${s.crumb}</div>`;
+        div.onclick = ()=>{ idx=i; render(); };
+        menuEl.appendChild(div);
+      });
+    }
+
+    function renderScreen(screen){
+      titleEl.textContent = screen.title;
+      crumbEl.textContent = screen.crumb;
+
+      kvEl.innerHTML = "";
+      screen.params.forEach(p=>{
+        const k = document.createElement("div");
+        k.className = "k";
+        k.textContent = p.k;
+
+        const v = document.createElement("div");
+        v.className = "v";
+        v.textContent = p.v;
+
+        kvEl.appendChild(k);
+        kvEl.appendChild(v);
+      });
+
+      helpEl.textContent = screen.help;
+
+      const practice = practiceEl.checked;
+      helpEl.classList.toggle("hidden", practice);
+      statusEl.textContent = practice
+        ? "Practice: explain it first, then reveal ✅"
+        : "Standby: Machine ready to start.";
+
+      quizQ.textContent = `Pantalla actual: ${screen.title}. Dale "Generar pregunta" para practicar.`;
+      quizA.textContent = "—";
+    }
+
+    function render(){
+      if(filtered.length===0){
+        menuEl.innerHTML = `<div class="small">No hay resultados 😅</div>`;
+        titleEl.textContent = "SIN RESULTADOS";
+        crumbEl.textContent = "Busca otra palabra";
+        kvEl.innerHTML = "";
+        helpEl.textContent = "";
+        return;
+      }
+      idx = Math.max(0, Math.min(idx, filtered.length-1));
+      renderMenu();
+      renderScreen(filtered[idx]);
+    }
+
+    function applyFilter(){
+      const q = qEl.value.trim().toLowerCase();
+      if(!q){
+        filtered = [...SCREENS];
+        idx = 0;
+        render();
+        return;
+      }
+      filtered = SCREENS.filter(s=>{
+        const hay =
+          s.title.toLowerCase().includes(q) ||
+          s.crumb.toLowerCase().includes(q) ||
+          s.help.toLowerCase().includes(q) ||
+          s.params.some(p => (p.k + " " + p.v).toLowerCase().includes(q));
+        return hay;
+      });
+      idx = 0;
+      render();
+    }
+
+    qEl.addEventListener("input", applyFilter);
+    clearEl.onclick = ()=>{ qEl.value=""; applyFilter(); };
+
+    practiceEl.addEventListener("change", ()=> render());
+
+    revealBtn.onclick = ()=> helpEl.classList.remove("hidden");
+    hideBtn.onclick = ()=> helpEl.classList.toggle("hidden", true);
+
+    nextBtn.onclick = ()=>{ if(filtered.length){ idx = (idx+1)%filtered.length; render(); } };
+    prevBtn.onclick = ()=>{ if(filtered.length){ idx = (idx-1+filtered.length)%filtered.length; render(); } };
+
+    // Botones "HMI" (solo efecto visual)
+    document.getElementById("btnReset").onclick = ()=> statusEl.textContent = "RESET pressed: values reset (simulado).";
+    document.getElementById("btnDate").onclick = ()=> statusEl.textContent = "DATE pressed: date/time screen (simulado).";
+    document.getElementById("btnCode").onclick = ()=> statusEl.textContent = "CODE pressed: coder screen (simulado).";
+
+    // Quiz: genera preguntas desde los params de la pantalla actual
+    quizBtn.onclick = ()=>{
+      if(!filtered.length) return;
+      const s = filtered[idx];
+      const candidates = s.params.filter(p => p.v && p.v !== "—");
+      if(candidates.length===0){
+        quizQ.textContent = "Esta pantalla no tiene parámetros con valores para preguntar.";
+        quizA.textContent = "Elegí otra pantalla.";
+        return;
+      }
+      const pick = candidates[Math.floor(Math.random()*candidates.length)];
+      const modes = [
+        () => ({
+          q:`¿Qué valor tiene "${pick.k}" en ${s.title}?`,
+          a:`Respuesta: ${pick.v}`
+        }),
+        () => ({
+          q:`Explicá para qué sirve este parámetro: "${pick.k}". (Luego revelá la explicación abajo)`,
+          a:`Pista: mirá el bloque “Explicación (manual)” de ${s.title}.`
+        }),
+      ];
+      const m = modes[Math.floor(Math.random()*modes.length)];
+      const qa = m();
+      quizQ.textContent = qa.q;
+      quizA.textContent = qa.a;
+    };
+
+    render();
+  </script>
+</body>
+</html>
